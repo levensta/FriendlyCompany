@@ -1,5 +1,6 @@
 ﻿
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace FriendlyCompany
 {
@@ -41,8 +42,9 @@ namespace FriendlyCompany
             this.Name = "Form1";
             this.Text = "Form1";
             this.DoubleBuffered = true;
+            this.Load += new System.EventHandler(this.Form1_Load);
+            this.FormClosing += new FormClosingEventHandler(this.Form1_FormClosing);
             this.ResumeLayout(false);
-
         }
 
         #endregion
