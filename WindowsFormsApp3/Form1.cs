@@ -1,17 +1,45 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace FriendlyCompany
 {
     public class CirclePanel : Panel
     {
+        public delegate void CrossingEdgeEventHandler(object sender, EventArgs e);
+        public event CrossingEdgeEventHandler CrossingEdge;
+
+        public CirclePanel()
+        {
+            Size = new Size(30, 30);
+            BackColor = Color.Transparent;
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
             using (var brush = new SolidBrush(Color.Black))
                 e.Graphics.FillEllipse(brush, 0, 0, Width, Height);
+        }
+
+        public void MoveCircle(int x)
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => MoveCircle(x)));
+            }
+            else
+            {
+                this.Left += x;
+
+                // Check if edge is crossed and fire the event
+                if (this.Location.X > this.Parent.ClientSize.Width)
+                {
+                    CrossingEdge?.Invoke(this, new EventArgs());
+                }
+            }
         }
     }
 
@@ -30,11 +58,9 @@ namespace FriendlyCompany
             _count = 0;
             _timer = new Timer();
 
-            _timer.Interval = 1000;
+            _timer.Interval = 200;
             _timer.Tick += timer_Tick;
             _timer.Start();
-
-            DoubleBuffered = true;
         }
 
         private void timer_Tick(object sender, EventArgs e)
@@ -42,9 +68,8 @@ namespace FriendlyCompany
             if (_circles.Count < MaxCount)
             {
                 var cp = new CirclePanel();
-                cp.Location = new Point(0, 30 * _count); //adjust if needed
-                cp.Size = new Size(30, 30); //adjust if needed
-                cp.BackColor = Color.Transparent;
+                cp.Location = new Point(0, 30 * _count);
+                cp.CrossingEdge += Panel_CrossingEdge;
 
                 _circles.Add(cp);
                 Controls.Add(_circles[_count]);
@@ -55,22 +80,15 @@ namespace FriendlyCompany
             {
                 foreach (var circle in _circles)
                 {
-                    circle.Location = new Point(circle.Location.X + 10, circle.Location.Y); //move right
-                    if (circle.Location.X > this.ClientSize.Width)
-                    {
-                        circle.Location = new Point(0, circle.Location.Y);
-                    }
+                    circle.MoveCircle(10);
                 }
             }
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void Panel_CrossingEdge(object sender, EventArgs e)
         {
-
+            CirclePanel panelCrossing = sender as CirclePanel;
+            panelCrossing.Location = new Point(0, panelCrossing.Location.Y);
         }
-
-        //private void InitializeComponent()
-        //{
-        //}
     }
 }
